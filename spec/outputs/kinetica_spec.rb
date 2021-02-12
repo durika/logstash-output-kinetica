@@ -18,7 +18,7 @@ describe LogStash::Outputs::Kinetica do
 
   shared_examples("basic tests") do
 		let(:basic_tests_config) { {"url" => url, "pool_max" => 1, "user" => "admin", "password" => "Kinetica1!",\
-			"table_name" => "jkr_test", "options" => {"text_has_header"=>"true", "error_handling"=>"abort"} } }
+			"table_name" => "jkr_test", "options" => {"text_has_header"=>"false", "error_handling"=>"abort", "text_delimiter"=>"*"} } }
 		subject { LogStash::Outputs::Kinetica.new(basic_tests_config) }
 
 		let(:expected_method) { method.clone.to_sym }

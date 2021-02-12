@@ -86,7 +86,7 @@ class LogStash::Outputs::Kinetica < LogStash::Outputs::Base
 	# [source,ruby]
 	#		mapping => {"foo" => "%{host}"
 	#							 "bar" => "%{type}"}
-	config :mapping, :validate => :hash
+	#config :mapping, :validate => :hash
 
 	# Set the format of the http body.
 	#
@@ -130,6 +130,10 @@ class LogStash::Outputs::Kinetica < LogStash::Outputs::Base
 
 		# Run named Timer as daemon thread
 		@timer = java.util.Timer.new("HTTP Output #{self.params['id']}", true)
+		
+		@text_delimiter = options["text_delimiter"].nil? ? "," : options["text_delimiter"]
+		
+		@text_escape_character = options["text_escape_character"].nil? ? "\\" : options["text_escape_character"]
 	end # def register
 
 	def multi_receive(events)
@@ -323,13 +327,25 @@ class LogStash::Outputs::Kinetica < LogStash::Outputs::Base
 	# Format the HTTP body
 	def event_body(event)
 		j=map_event(event)
-		msg = j["message"]
+		first=true
+		data=""
+		j.keys.sort.each {
+			|k|
+			val=j[k].to_s.gsub(@text_delimiter,"#{@text_escape_character}#{@text_delimiter}")
+			if first
+				data=val
+				first = false
+			else
+				data="#{data}#{@text_delimiter}#{val}"
+			end
+		}
 		body="{
 \"table_name\": \"#{@table_name}\",
-\"data_text\": \"#{msg}\",
+\"data_text\": \"#{data}\",
 \"create_table_options\": #{create_table_options.to_json},
 \"options\": #{options.to_json}
-}"	
+}"
+		@logger.info("body: #{body}")
 		body
 	end
 
